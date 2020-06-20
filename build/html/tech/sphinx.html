@@ -1,0 +1,143 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Sphinx &#8212; doc.oko.io  documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Jacob Okamoto’s Doc Site" href="../index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="sphinx">
+<h1>Sphinx<a class="headerlink" href="#sphinx" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="setup">
+<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<p>Install on <code class="docutils literal notranslate"><span class="pre">dnf</span></code>-based distros:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">dnf</span> <span class="n">install</span> <span class="n">python3</span><span class="o">-</span><span class="n">spinx</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sphinx</span><span class="o">-</span><span class="n">quickstart</span> <span class="o">-</span><span class="n">p</span> <span class="o">&lt;</span><span class="n">PROJECT</span><span class="o">-</span><span class="n">NAME</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">a</span> <span class="o">&lt;</span><span class="n">AUTHOR</span><span class="o">-</span><span class="n">NAME</span><span class="o">&gt;</span> <span class="o">--</span><span class="n">makefile</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="markdown-support">
+<h2>Markdown Support<a class="headerlink" href="#markdown-support" title="Permalink to this headline">¶</a></h2>
+<p>See the <a class="reference external" href="https://www.sphinx-doc.org/en/master/usage/quickstart.html">Sphinx docs on Markdown support</a>.</p>
+</div>
+<div class="section" id="pre-commit-hook">
+<h2>Pre-Commit Hook<a class="headerlink" href="#pre-commit-hook" title="Permalink to this headline">¶</a></h2>
+<p>Put in <code class="docutils literal notranslate"><span class="pre">.git/hooks/pre-commit</span></code>:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/sh</span>
+<span class="k">if</span> git rev-parse --verify HEAD &gt;/dev/null <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
+<span class="k">then</span>
+	<span class="nv">against</span><span class="o">=</span>HEAD
+<span class="k">else</span>
+	<span class="c1"># Initial commit: diff against an empty tree object</span>
+	<span class="nv">against</span><span class="o">=</span><span class="k">$(</span>git hash-object -t tree /dev/null<span class="k">)</span>
+<span class="k">fi</span>
+
+<span class="o">[[</span> <span class="k">$(</span>git diff --stat<span class="k">)</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span> <span class="o">]]</span> <span class="o">||</span> <span class="nb">exit</span> <span class="m">1</span>
+make html
+<span class="o">[[</span> <span class="k">$(</span>git diff --stat<span class="k">)</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span> <span class="o">]]</span> <span class="o">||</span> <span class="nb">exit</span> <span class="m">1</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">doc.oko.io</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Sphinx</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#markdown-support">Markdown Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pre-commit-hook">Pre-Commit Hook</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../index.html" title="previous chapter">Jacob Okamoto’s Doc Site</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Jacob Okamoto.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/tech/sphinx.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
