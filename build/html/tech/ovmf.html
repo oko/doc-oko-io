@@ -1,0 +1,257 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>OVMF &#8212; doc.oko.io  documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Sphinx" href="sphinx.html" />
+    <link rel="prev" title="Jacob Okamoto’s Doc Site" href="../index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="ovmf">
+<h1>OVMF<a class="headerlink" href="#ovmf" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="building-ovmf">
+<h2>Building OVMF<a class="headerlink" href="#building-ovmf" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ sudo yum groupinstall &#39;Development tools&#39;
+$ sudo yum install libuuid-devel iasl nasm
+$ git clone https://github.com/tianocore/edk2.git
+$ cd edk2
+$ git submodule init &amp;&amp; git submodule update
+$ make -C BaseTools
+$ . edksetup.sh
+$ cat &lt;&lt;-EOF &gt; Conf/target.txt
+ACTIVE_PLATFORM       = OvmfPkg/OvmfPkgX64.dsc
+TARGET                = RELEASE
+TARGET_ARCH           = X64
+TOOL_CHAIN_CONF       = Conf/tools_def.txt
+TOOL_CHAIN_TAG        = GCC48
+BUILD_RULE_CONF = Conf/build_rule.txt
+EOF
+$ build -D NETWORK_IP6_ENABLE=TRUE -D HTTP_BOOT_ENABLE=TRUE -D TLS_ENABLE=TRUE
+</pre></div>
+</div>
+<p>If you’re on Ubuntu, you’ll need to do:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">uuid</span><span class="o">-</span><span class="n">dev</span> <span class="n">iasl</span> <span class="n">nasm</span> <span class="n">gcc5</span>
+<span class="n">cat</span> <span class="o">&lt;&lt;-</span><span class="n">EOF</span> <span class="o">&gt;</span> <span class="n">Conf</span><span class="o">/</span><span class="n">target</span><span class="o">.</span><span class="n">txt</span>
+<span class="n">ACTIVE_PLATFORM</span>       <span class="o">=</span> <span class="n">OvmfPkg</span><span class="o">/</span><span class="n">OvmfPkgX64</span><span class="o">.</span><span class="n">dsc</span>
+<span class="n">TARGET</span>                <span class="o">=</span> <span class="n">RELEASE</span>
+<span class="n">TARGET_ARCH</span>           <span class="o">=</span> <span class="n">X64</span>
+<span class="n">TOOL_CHAIN_CONF</span>       <span class="o">=</span> <span class="n">Conf</span><span class="o">/</span><span class="n">tools_def</span><span class="o">.</span><span class="n">txt</span>
+<span class="n">TOOL_CHAIN_TAG</span>        <span class="o">=</span> <span class="n">GCC5</span>
+<span class="n">BUILD_RULE_CONF</span> <span class="o">=</span> <span class="n">Conf</span><span class="o">/</span><span class="n">build_rule</span><span class="o">.</span><span class="n">txt</span>
+<span class="n">EOF</span>
+</pre></div>
+</div>
+<p>This sets things up for a GCC5 build instead.</p>
+</div>
+<div class="section" id="running-with-ovmf">
+<h2>Running with OVMF<a class="headerlink" href="#running-with-ovmf" title="Permalink to this headline">¶</a></h2>
+<p>Script to run OVMF on QEMU:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>#!/bin/bash
+set -eux
+eficode=&quot;$1&quot;
+efivars=&quot;$2&quot;
+
+wd=&quot;$(mktemp -d)&quot;
+vars=&quot;$wd/$(basename &quot;$efivars&quot;)&quot;
+
+cp &quot;$efivars&quot; &quot;$vars&quot;
+
+qemu-system-x86_64 \
+    -name guest=ovmftest \
+    -enable-kvm -cpu host \
+    -nographic \
+    -drive if=pflash,format=raw,readonly,file=&quot;$eficode&quot; \
+    -drive if=pflash,format=raw,file=&quot;$vars&quot; \
+    -netdev tap,id=net0,ifname=tap0,script=no,downscript=no \
+    -device virtio-net-pci,romfile=,netdev=net0 -net none
+</pre></div>
+</div>
+<p>Use <code class="docutils literal notranslate"><span class="pre">screen</span> <span class="pre">/dev/pts/XX</span></code> based on the output of the QEMU script at startup to connect to serial console.</p>
+</div>
+<div class="section" id="comparing-vars-fd-files">
+<h2>Comparing VARS.fd files<a class="headerlink" href="#comparing-vars-fd-files" title="Permalink to this headline">¶</a></h2>
+<ol>
+<li><p>Start up a VM with a fresh <code class="docutils literal notranslate"><span class="pre">OVMF_VARS.fd</span></code> using the above script</p></li>
+<li><p>Shut down the VM</p></li>
+<li><p>Make a copy of the <code class="docutils literal notranslate"><span class="pre">OVMF_VARS.fd</span></code> file from the temporary folder used by the script</p></li>
+<li><p>Start up another VM with the copied <code class="docutils literal notranslate"><span class="pre">OVMF_VARS.fd</span></code></p></li>
+<li><p>Wait for setup to launch, tweak things, and shut down the VM</p></li>
+<li><p>Repeat (3)</p></li>
+<li><p>Dump both the (3) and (6) files to hex files using <code class="docutils literal notranslate"><span class="pre">xxd</span> <span class="pre">FILE.fd</span> <span class="pre">&gt;</span> <span class="pre">FILE.hex</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">diff</span></code> the hex files</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>977c977
+&lt; 0003d00: 0000 7f57 d35b f9ec 0200 2400 afaf 0400  ...W.[....$.....
+---
+&gt; 0003d00: 0000 7e56 e533 e915 0200 2400 afaf 0400  ..~V.3....$.....
+985c985
+&lt; 0003d80: 0000 7f57 d35b 7080 0300 3400 afaf 0800  ...W.[p...4.....
+---
+&gt; 0003d80: 0000 7e56 e533 5fa9 0300 3400 afaf 0800  ..~V.3_...4.....
+994c994
+&lt; 0003e10: 0001 0001 2496 90cc 5254 0012 3456 ffff  ....$...RT..4V..
+---
+&gt; 0003e10: 0001 0001 2496 8c23 5254 0012 3456 ffff  ....$..#RT..4V..
+1055c1055
+&lt; 00041e0: 9f59 4d85 0ee2 1a52 2c59 b2ff aa55 3f00  .YM....R,Y...U?.
+---
+&gt; 00041e0: 9f59 4d85 0ee2 1a52 2c59 b2ff aa55 3c00  .YM....R,Y...U&lt;.
+1087,1088c1087,1088
+&lt; 00043e0: 3100 3200 3300 3400 3500 3600 0000 7f57  1.2.3.4.5.6....W
+&lt; 00043f0: d35b 6f80 0300 3400 afaf 0800 0000 0100  .[o...4.........
+---
+&gt; 00043e0: 3100 3200 3300 3400 3500 3600 0000 7e56  1.2.3.4.5.6...~V
+&gt; 00043f0: e533 5ea9 0300 3400 afaf 0800 0000 0100  .3^...4.........
+1091,1097c1091,1097
+&lt; 0004420: 0000 5054 00ff fe12 3456 ffff ffff ffff  ..PT....4V......
+&lt; 0004430: ffff ffff ffff ffff ffff ffff ffff ffff  ................
+&lt; 0004440: ffff ffff ffff ffff ffff ffff ffff ffff  ................
+&lt; 0004450: ffff ffff ffff ffff ffff ffff ffff ffff  ................
+&lt; 0004460: ffff ffff ffff ffff ffff ffff ffff ffff  ................
+&lt; 0004470: ffff ffff ffff ffff ffff ffff ffff ffff  ................
+&lt; 0004480: ffff ffff ffff ffff ffff ffff ffff ffff  ................
+---
+&gt; 0004420: 0000 5054 00ff fe12 3456 ffff aa55 3f00  ..PT....4V...U?.
+&gt; 0004430: 0700 0000 0000 0000 0000 0000 0000 0000  ................
+&gt; 0004440: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+&gt; 0004450: 1400 0000 0a00 0000 61df e48b ca93 d211  ........a.......
+&gt; 0004460: aa0d 00e0 9803 2b8c 4200 6f00 6f00 7400  ......+.B.o.o.t.
+&gt; 0004470: 4f00 7200 6400 6500 7200 0000 0300 0200  O.r.d.e.r.......
+&gt; 0004480: 0100 0400 0000 ffff ffff ffff ffff ffff  ................
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">$</span> <span class="pre">diff</span> <span class="pre">&lt;(xxd</span> <span class="pre">~/OVMF_VARS_v6.fd)</span> <span class="pre">&lt;(xxd</span> <span class="pre">~/OVMF_VARS_v6_test.fd)</span></code></p>
+</li>
+</ol>
+</div>
+<div class="section" id="intel-e1000-drivers">
+<h2>Intel E1000 Drivers<a class="headerlink" href="#intel-e1000-drivers" title="Permalink to this headline">¶</a></h2>
+<p>Download link: https://downloadmirror.intel.com/19186/eng/PREBOOT.EXE</p>
+<p>From EDK2 docs for ease of recall:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">*</span> <span class="n">Also</span> <span class="n">independently</span> <span class="n">of</span> <span class="n">the</span> <span class="n">iPXE</span> <span class="n">NIC</span> <span class="n">drivers</span><span class="p">,</span> <span class="n">Intel</span><span class="s1">&#39;s proprietary E1000 NIC</span>
+  <span class="n">driver</span> <span class="p">(</span><span class="kn">from</span> <span class="nn">the</span> <span class="n">BootUtil</span> <span class="n">distribution</span><span class="p">)</span> <span class="n">can</span> <span class="n">be</span> <span class="n">embedded</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">OVMF</span> <span class="n">image</span> <span class="n">at</span>
+  <span class="n">build</span> <span class="n">time</span><span class="p">:</span>
+
+  <span class="o">-</span> <span class="n">Download</span> <span class="n">BootUtil</span><span class="p">:</span>
+    <span class="o">-</span> <span class="n">Navigate</span> <span class="n">to</span>
+      <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">downloadcenter</span><span class="o">.</span><span class="n">intel</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">download</span><span class="o">/</span><span class="mi">19186</span><span class="o">/</span><span class="n">Ethernet</span><span class="o">-</span><span class="n">Intel</span><span class="o">-</span><span class="n">Ethernet</span><span class="o">-</span><span class="n">Connections</span><span class="o">-</span><span class="n">Boot</span><span class="o">-</span><span class="n">Utility</span><span class="o">-</span><span class="n">Preboot</span><span class="o">-</span><span class="n">Images</span><span class="o">-</span><span class="ow">and</span><span class="o">-</span><span class="n">EFI</span><span class="o">-</span><span class="n">Drivers</span>
+    <span class="o">-</span> <span class="n">Click</span> <span class="n">the</span> <span class="n">download</span> <span class="n">link</span> <span class="k">for</span> <span class="s2">&quot;PREBOOT.EXE&quot;</span><span class="o">.</span>
+    <span class="o">-</span> <span class="n">Accept</span> <span class="n">the</span> <span class="n">Intel</span> <span class="n">Software</span> <span class="n">License</span> <span class="n">Agreement</span> <span class="n">that</span> <span class="n">appears</span><span class="o">.</span>
+    <span class="o">-</span> <span class="n">Unzip</span> <span class="s2">&quot;PREBOOT.EXE&quot;</span> <span class="n">into</span> <span class="n">a</span> <span class="n">separate</span> <span class="n">directory</span> <span class="p">(</span><span class="n">this</span> <span class="n">works</span> <span class="k">with</span> <span class="n">the</span>
+      <span class="s2">&quot;unzip&quot;</span> <span class="n">utility</span> <span class="n">on</span> <span class="n">platforms</span> <span class="n">different</span> <span class="kn">from</span> <span class="nn">Windows</span> <span class="k">as</span> <span class="n">well</span><span class="p">)</span><span class="o">.</span>
+    <span class="o">-</span> <span class="n">Copy</span> <span class="n">the</span> <span class="s2">&quot;APPS/EFI/EFIx64/E3522X2.EFI&quot;</span> <span class="n">driver</span> <span class="n">binary</span> <span class="n">to</span>
+      <span class="s2">&quot;Intel3.5/EFIX64/E3522X2.EFI&quot;</span> <span class="ow">in</span> <span class="n">your</span> <span class="n">WORKSPACE</span><span class="o">.</span>
+    <span class="o">-</span> <span class="n">Intel</span> <span class="n">have</span> <span class="n">stopped</span> <span class="n">distributing</span> <span class="n">an</span> <span class="n">IA32</span> <span class="n">driver</span> <span class="n">binary</span> <span class="p">(</span><span class="n">which</span> <span class="n">used</span> <span class="n">to</span>
+      <span class="n">match</span> <span class="n">the</span> <span class="n">filename</span> <span class="n">pattern</span> <span class="s2">&quot;E35??E2.EFI&quot;</span><span class="p">),</span> <span class="n">thus</span> <span class="n">this</span> <span class="n">method</span> <span class="n">will</span> <span class="n">only</span>
+      <span class="n">work</span> <span class="k">for</span> <span class="n">the</span> <span class="n">IA32X64</span> <span class="ow">and</span> <span class="n">X64</span> <span class="n">builds</span> <span class="n">of</span> <span class="n">OVMF</span><span class="o">.</span>
+
+  <span class="o">-</span> <span class="n">Include</span> <span class="n">the</span> <span class="n">driver</span> <span class="ow">in</span> <span class="n">OVMF</span> <span class="n">during</span> <span class="n">the</span> <span class="n">build</span><span class="p">:</span>
+    <span class="o">-</span> <span class="n">Add</span> <span class="s2">&quot;-D E1000_ENABLE&quot;</span> <span class="n">to</span> <span class="n">your</span> <span class="n">build</span> <span class="n">command</span> <span class="p">(</span><span class="n">only</span> <span class="n">when</span> <span class="n">building</span>
+      <span class="s2">&quot;OvmfPkg/OvmfPkgIa32X64.dsc&quot;</span> <span class="ow">or</span> <span class="s2">&quot;OvmfPkg/OvmfPkgX64.dsc&quot;</span><span class="p">)</span><span class="o">.</span>
+    <span class="o">-</span> <span class="n">For</span> <span class="n">example</span><span class="p">:</span> <span class="s2">&quot;build -D E1000_ENABLE&quot;</span><span class="o">.</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">doc.oko.io</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">OVMF</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#building-ovmf">Building OVMF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#running-with-ovmf">Running with OVMF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#comparing-vars-fd-files">Comparing VARS.fd files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#intel-e1000-drivers">Intel E1000 Drivers</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sphinx.html">Sphinx</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../index.html" title="previous chapter">Jacob Okamoto’s Doc Site</a></li>
+      <li>Next: <a href="sphinx.html" title="next chapter">Sphinx</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Jacob Okamoto.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/tech/ovmf.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
